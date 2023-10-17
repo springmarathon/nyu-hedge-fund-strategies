@@ -14,5 +14,5 @@ def get_price_daterange(tickers, as_of_date):
 
 if __name__ == "__main__":
     quandl.ApiConfig.api_key = 'NRvcyMwNMXZ2ooDSM3nw'
-    df = get_price_daterange(['ZTS'], pd.Timestamp('2023-08-08 00:00:00'))
+    df = get_price_daterange(['VLTO'], pd.Timestamp('2023-08-31 00:00:00'))
     print(df)
