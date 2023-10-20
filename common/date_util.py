@@ -1,6 +1,7 @@
 import calendar
+import numpy as np
 from datetime import date, datetime, timedelta
-from dateutil import rrule
+from dateutil import rrule, easter
 from pandas.tseries.holiday import USFederalHolidayCalendar
 
 
@@ -10,7 +11,9 @@ def get_month_end(year, month):
 
 def get_holidays(year):
     cal = USFederalHolidayCalendar()
-    return cal.holidays(start=date(year, 1, 1).strftime("%Y-%m-%d"), end=date(year, 12, 31).strftime("%Y-%m-%d")).to_pydatetime()
+    federal_holidays = cal.holidays(start=date(year, 1, 1).strftime("%Y-%m-%d"), end=date(year, 12, 31).strftime("%Y-%m-%d")).to_pydatetime()
+    federal_holidays = np.append(federal_holidays, datetime.combine(easter.easter(year)+timedelta(days=-2), datetime.min.time()))
+    return federal_holidays
 
 
 def is_bus_day(dt):
@@ -28,3 +31,4 @@ if __name__ == "__main__":
     print(get_bus_month_end(2023, 4))
     print(datetime.combine(date(1999, 5, 31), datetime.min.time()) in get_holidays(date(1999, 5, 31).year))
     print(get_bus_month_end(1999, 5))
+    print(get_holidays(2002))
