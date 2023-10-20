@@ -4,10 +4,13 @@ import nasdaqdatalink as quandl
 import pandas as pd
 
 
-def get_price_daterange(tickers, as_of_date):
+def get_price_daterange(tickers, start_date, end_date=None):
     """ To retrieve data for a specified data range """
-    gte = as_of_date.strftime("%Y-%m-%d")
-    lte = (as_of_date + datetime.timedelta(days=40)).strftime("%Y-%m-%d")
+    gte = start_date.strftime("%Y-%m-%d")
+    if end_date is None:
+        lte = (start_date + datetime.timedelta(days=40)).strftime("%Y-%m-%d")
+    else:
+        lte = end_date.strftime("%Y-%m-%d")
     return quandl.get_table('SHARADAR/SEP', date={'gte': gte, 'lte': lte}, ticker=tickers)
 
 
