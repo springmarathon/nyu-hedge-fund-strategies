@@ -4,13 +4,13 @@ import pandas as pd
 from datetime import date, timedelta
 
 
-def get_fundamentals(tickers, as_of_date, refresh=False):
-    path = "/Users/weizhang/Documents/_GIT/quant-strategies/data/Sharadar/Fundamentals/fundamentals_" + as_of_date.strftime("%Y-%m-%d") + ".csv"
+def get_fundamentals(tickers, as_of_date, dimension="ARQ", refresh=False):
+    path = "/Users/weizhang/Documents/_GIT/quant-strategies/data/Sharadar/Fundamentals/" + dimension + "/fundamentals_" + as_of_date.strftime("%Y-%m-%d") + ".csv"
     if os.path.isfile(path) and (not refresh):
         return pd.read_csv(path)
     
     start_date = as_of_date - timedelta(days=180)
-    fundamentals = quandl.get_table('SHARADAR/SF1', datekey={'gte':start_date.strftime("%Y-%m-%d"), 'lte':as_of_date.strftime("%Y-%m-%d")}, dimension="ART", ticker=",".join(tickers))
+    fundamentals = quandl.get_table('SHARADAR/SF1', datekey={'gte':start_date.strftime("%Y-%m-%d"), 'lte':as_of_date.strftime("%Y-%m-%d")}, dimension=dimension, ticker=",".join(tickers))
     fundamentals = fundamentals.drop_duplicates("ticker", keep="first")
     
     fundamentals.to_csv(path)
