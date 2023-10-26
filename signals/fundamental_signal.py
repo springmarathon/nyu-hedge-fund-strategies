@@ -2,14 +2,16 @@ import numpy as np
 import numpy_financial as npf
 
 
-# Quality
 def cfroi(data):
-    data["non_depre_assets"] = np.nansum([data["investments"], data["ppnenet"]], axis=0) / data["shareswa"]
+    data["non_depre_assets"] = np.nansum([data["workingcapital"], data["investments"], data["ppnenet"]], axis=0) / data["sharesbas"]
     data["cfroi"] = 0
+    data["cf"] = data["ncf"] / data["shareswa"]
     for i in range(data.shape[0]):
         if (~np.isnan(data.loc[i, "price"])) and (~np.isnan(data.loc[i, "non_depre_assets"])):
-            cf = np.nansum([data.loc[i, "eps"], data.loc[i, "dps"]]) / 2.0 if np.isnan(data.loc[i, "fcfps"]) else data.loc[i, "fcfps"]
-            data.loc[i, "cfroi"] = npf.irr(np.append(np.append(-1 * data.loc[i, "price"], 1.03 ** np.arange(0, 19) * cf), 1.03 ** 20 * cf + data.loc[i, "non_depre_assets"]))
+            cf = np.nansum([data.loc[i, "eps"], data.loc[i, "dps"]]) / 2.0 if np.isnan(data.loc[i, "cf"]) else data.loc[i, "cf"]
+            # fv = data.loc[i, "non_depre_assets"] if np.isnan(data.loc[i, "tbvps"]) else data.loc[i, "tbvps"]
+            fv = data.loc[i, "tbvps"] if np.isnan(data.loc[i, "non_depre_assets"]) else data.loc[i, "non_depre_assets"]
+            data.loc[i, "cfroi"] = npf.irr(np.append(np.append(-1 * data.loc[i, "price"], 1.03 ** np.arange(0, 19) * cf), 1.03 ** 20 * cf + fv))
     return data
 
 
@@ -29,7 +31,7 @@ def margin(data):
 
 
 def operating_leverage(data):
-    data["operating_leverage"] = (data.assets - data.equity - data.debt) / (data.equity + data.debt - data.cashneq)
+    data["operating_leverage"] = (data["liabilities"] - data.debt) / (data.equity + data.debt - data.cashneq)
     return data
 
 
@@ -48,7 +50,6 @@ def return_on_invcap(data):
     return data
 
 
-# Value
 def book_to_price(data):
     data["book_to_price"] = data["equity"] / data["marketcap"]
     return data
@@ -70,7 +71,7 @@ def fcf_to_ev(data):
 
 
 def fcf_to_price(data):
-    data["fcf_to_price"] = data["fcfps"] / data["price"]
+    data["fcf_to_price"] = data["fcf"] / (data.equity + data.debt - data.cashneq)
     return data
 
 
@@ -79,16 +80,26 @@ def ncfo_to_ev(data):
     return data
 
 
+def ncfo_to_mc(data):
+    data["ncfo_to_mc"] = data["ncfo"] / (data.equity + data.debt - data.cashneq)
+    return data
+
+
+def ncf_to_ev(data):
+    data["ncf_to_ev"] = data["ncf"] / data["ev"]
+    return data
+
+
 def ncf_to_mc(data):
-    data["ncf_to_mc"] = data["ncf"] / data["marketcap"]
+    data["ncf_to_mc"] = data["ncf"] / (data.equity + data.debt - data.cashneq)
     return data
 
 
 def sales_to_price(data):
-    data["sales_to_price"] = data["revenue"] / data["marketcap"]
+    data["sales_to_price"] = data["revenue"] / (data.equity + data.debt - data.cashneq)
     return data
 
 
-def tangible_book_to_price(data):
-    data["tangible_book_to_price"] = data["tangibles"] / data["marketcap"]
+def tangible_asset_to_price(data):
+    data["tangible_asset_to_price"] = data["tangibles"] / (data.equity + data.debt - data.cashneq)
     return data
