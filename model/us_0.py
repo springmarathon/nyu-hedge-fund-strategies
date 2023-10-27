@@ -1,7 +1,8 @@
+import matplotlib.pyplot as plt
 import nasdaqdatalink as quandl
 import numpy as np
 import pandas as pd
-from datetime import datetime
+from datetime import date, datetime
 from common import date_util
 from data import investment_universe, sharadar_fundamentals, sharadar_prices, sharadar_tickers
 from signals import fundamental_signal
@@ -11,10 +12,12 @@ print(datetime.now())
 quandl.ApiConfig.api_key = 'NRvcyMwNMXZ2ooDSM3nw'
 
 
+dates = []
 pnl = []
 for i in range(1999, 2020):
     for j in range(1, 13):
         as_of_date = date_util.get_bus_month_end(i, j)
+        dates.append(as_of_date)
         universe = investment_universe.get_SPX(as_of_date)
         fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), as_of_date)
         prices = sharadar_prices.get_prices(universe['ticker'].to_list(), as_of_date)
@@ -29,8 +32,8 @@ for i in range(1999, 2020):
         fundamentals = fundamental_signal.return_on_equity(fundamentals)
         fundamentals = fundamental_signal.dividend_yield(fundamentals)
         fundamentals = fundamental_signal.earnings_to_price(fundamentals)
-        fundamentals = fundamental_signal.ofcf_to_ev(fundamentals)
-        fundamentals = fundamental_signal.tangible_book_to_price(fundamentals)
+        fundamentals = fundamental_signal.ncf_to_ev(fundamentals)
+        fundamentals = fundamental_signal.tangible_asset_to_price(fundamentals)
 
         fundamentals["operating_leverage_z"] = fundamentals.groupby("sector", group_keys=False)["operating_leverage"].apply(lambda x: (x - np.mean(x)) / np.std(x))
         fundamentals["return_on_equity_z"] = fundamentals.groupby("sector", group_keys=False)["return_on_equity"].apply(lambda x: (x - np.mean(x)) / np.std(x))
@@ -39,9 +42,9 @@ for i in range(1999, 2020):
 
         fundamentals["dividend_yield_z"] = fundamentals.groupby("sector", group_keys=False)["dividend_yield"].apply(lambda x: (x - np.mean(x)) / np.std(x))
         fundamentals["earnings_to_price_z"] = fundamentals.groupby("sector", group_keys=False)["earnings_to_price"].apply(lambda x: (x - np.mean(x)) / np.std(x))
-        fundamentals["ofcf_to_ev_z"] = fundamentals.groupby("sector", group_keys=False)["ofcf_to_ev"].apply(lambda x: (x - np.mean(x)) / np.std(x))
-        fundamentals["tangible_book_to_price_z"] = fundamentals.groupby("sector", group_keys=False)["tangible_book_to_price"].apply(lambda x: (x - np.mean(x)) / np.std(x))
-        fundamentals["value"] = (fundamentals["dividend_yield_z"] + fundamentals["earnings_to_price_z"] + fundamentals["ofcf_to_ev_z"] + fundamentals["tangible_book_to_price_z"]) / 4
+        fundamentals["ncf_to_ev_z"] = fundamentals.groupby("sector", group_keys=False)["ncf_to_ev"].apply(lambda x: (x - np.mean(x)) / np.std(x))
+        fundamentals["tangible_asset_to_price_z"] = fundamentals.groupby("sector", group_keys=False)["tangible_asset_to_price"].apply(lambda x: (x - np.mean(x)) / np.std(x))
+        fundamentals["value"] = (fundamentals["dividend_yield_z"] + fundamentals["earnings_to_price_z"] + fundamentals["ncf_to_ev_z"] + fundamentals["tangible_asset_to_price_z"]) / 4
 
         fundamentals["composite"] = (fundamentals["quality"] + fundamentals["value"]) / 2
 
@@ -50,6 +53,30 @@ for i in range(1999, 2020):
         pnl.append(fundamentals[fundamentals["composite"] >= fundamentals.groupby("sector")["composite"].transform("quantile", 0.8)]["forward_return"].mean() - 
                    fundamentals[fundamentals["composite"] <= fundamentals.groupby("sector")["composite"].transform("quantile", 0.2)]["forward_return"].mean())
         
-print(sum(pnl))
-print(np.mean(pnl) / np.std(pnl) * np.sqrt(12))
+pnl = np.array(pnl)
+file = open('/Users/weizhang/Documents/_GIT/quant-strategies/documents/us_0_{}.txt'.format(date.today().strftime("%Y-%m-%d")), 'w')
+file.write("Annual Ret: {:.2%}\n".format(np.mean(pnl) * 12))
+file.write("Annual Vol: {:.2%}\n".format(np.std(pnl) * np.sqrt(12)))
+file.write("Sharpe Ratio: {:.2f}\n".format(np.mean(pnl) / np.std(pnl) * np.sqrt(12)))
+cum_returns = np.cumprod(pnl + 1) - 1
+high_watermark = np.maximum.accumulate(cum_returns)
+drawdown = high_watermark - cum_returns
+file.write("Worst Drawdown: {:.2%}\n".format(np.max(drawdown)))
+file.write("Percent Days Up: {:.2%}\n".format(len(pnl[pnl >= 0]) / len(pnl)))
+file.write("Average Daily Gain: {:.2%}\n".format(np.mean(pnl[pnl >= 0])))
+file.write("Average Daily Loss: {:.2%}\n".format(np.mean(pnl[pnl < 0])))
+file.write("Best Month: {:.2%}\n".format(np.max(pnl)))
+file.write("Worst Month: {:.2%}\n".format(np.min(pnl)))
+
+file.write("1999 - 2009 Annual Ret: {:.2%}\n".format(np.mean(pnl[:120]) * 12))
+file.write("1999 - 2009 Annual Vol: {:.2%}\n".format(np.std(pnl[:120]) * np.sqrt(12)))
+file.write("1999 - 2009 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl[:120]) / np.std(pnl[:120]) * np.sqrt(12)))
+
+file.write("2009 - 2019 Annual Ret: {:.2%}\n".format(np.mean(pnl[120:]) * 12))
+file.write("2009 - 2019 Annual Vol: {:.2%}\n".format(np.std(pnl[120:]) * np.sqrt(12)))
+file.write("2009 - 2019 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl[120:]) / np.std(pnl[120:]) * np.sqrt(12)))
+
+file.close()
+plt.plot(dates, np.cumprod(pnl + 1) - 1)
+plt.savefig('/Users/weizhang/Documents/_GIT/quant-strategies/documents/us_0_{}.png'.format(date.today().strftime("%Y-%m-%d")))
 print(datetime.now())

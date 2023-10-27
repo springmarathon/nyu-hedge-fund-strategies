@@ -43,7 +43,7 @@ for i in range(1999, 2020):
                    fundamentals[fundamentals["composite"] <= fundamentals.groupby("sector")["composite"].transform("quantile", 0.25)]["forward_return"].mean())
 
 pnl = np.array(pnl)
-file = open('us_1_{}.txt'.format(date.today().strftime("%Y-%m-%d")), 'w')
+file = open('/Users/weizhang/Documents/_GIT/quant-strategies/documents/us_1_{}.txt'.format(date.today().strftime("%Y-%m-%d")), 'w')
 file.write("Annual Ret: {:.2%}\n".format(np.mean(pnl) * 12))
 file.write("Annual Vol: {:.2%}\n".format(np.std(pnl) * np.sqrt(12)))
 file.write("Sharpe Ratio: {:.2f}\n".format(np.mean(pnl) / np.std(pnl) * np.sqrt(12)))
@@ -67,5 +67,5 @@ file.write("2009 - 2019 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl[120:]) / np.s
 
 file.close()
 plt.plot(dates, np.cumprod(pnl + 1) - 1)
-plt.savefig('us_1_{}.png'.format(date.today().strftime("%Y-%m-%d")))
+plt.savefig('/Users/weizhang/Documents/_GIT/quant-strategies/documents/us_1_{}.png'.format(date.today().strftime("%Y-%m-%d")))
 print(datetime.now())
