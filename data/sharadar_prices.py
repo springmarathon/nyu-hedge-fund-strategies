@@ -22,4 +22,5 @@ def get_prices(tickers, as_of_date, refresh=False):
 
 if __name__ == "__main__":
     quandl.ApiConfig.api_key = 'NRvcyMwNMXZ2ooDSM3nw'
-    prices = get_prices(["AAPL", "AMZN"], date(2023, 3, 31))
+    prices = get_prices(["MSFT"], date(2023, 8, 31))
+    print(prices)
