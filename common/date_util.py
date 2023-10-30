@@ -27,6 +27,12 @@ def get_bus_month_end(year, month):
     return month_end
 
 
+def get_previous_month_end(as_of_date):
+    i = as_of_date.year - 1 if as_of_date.month == 1 else as_of_date.year
+    j =  12 if as_of_date.month == 1 else as_of_date.month -1
+    return get_bus_month_end(i, j)
+
+
 if __name__ == "__main__":
     print(get_bus_month_end(2023, 4))
     print(datetime.combine(date(1999, 5, 31), datetime.min.time()) in get_holidays(date(1999, 5, 31).year))
