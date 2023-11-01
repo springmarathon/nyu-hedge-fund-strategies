@@ -1,1 +1,1 @@
-# nyu-hedge-fund-strategies
+# quant-strategies
