@@ -15,7 +15,7 @@ quandl.ApiConfig.api_key = 'NRvcyMwNMXZ2ooDSM3nw'
 dates = []
 pnl = []
 rebal_date = date(1999, 1, 1)
-while rebal_date <= date(2019, 12, 31):
+while rebal_date <= date(2020, 12, 31):
     rebal_date = date_util.get_next_rebal_day(rebal_date, 3)
 
     dates.append(rebal_date)
@@ -86,8 +86,11 @@ file.write("1999 - 2009 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl[:520]) / np.s
 file.write("2009 - 2019 Annual Ret: {:.2%}\n".format(np.mean(pnl[520:]) * 52))
 file.write("2009 - 2019 Annual Vol: {:.2%}\n".format(np.std(pnl[520:]) * np.sqrt(52)))
 file.write("2009 - 2019 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl[520:]) / np.std(pnl[520:]) * np.sqrt(52)))
-
 file.close()
+
 plt.plot(dates, np.cumprod(pnl + 1) - 1)
 plt.savefig('/Users/weizhang/Documents/_GIT/quant-strategies/documents/us_2_{}.png'.format(date.today().strftime("%Y-%m-%d")))
+
+pd.DataFrame({"Date": dates, "Pnl": pnl}).to_csv('/Users/weizhang/Documents/_GIT/quant-strategies/documents/us_2_{}.csv'.format(date.today().strftime("%Y-%m-%d")), index=False)
+
 print(datetime.now())

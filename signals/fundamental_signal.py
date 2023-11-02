@@ -120,3 +120,8 @@ def sales_to_price(data):
 def tangible_asset_to_price(data):
     data["tangible_asset_to_price"] = data["tangibles"] / (data.equity + data.debt - data.cashneq)
     return data
+
+
+def size(data):
+    data["size"] = -np.log(data["marketcap"])
+    return data
