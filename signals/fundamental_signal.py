@@ -2,6 +2,7 @@ import numpy as np
 import numpy_financial as npf
 
 
+# V2
 # Difference between the reported (accrual) earnings and cash earnings, divided by total assets
 def accruals(data):
     data["accruals"] = -1.0 * (((data["assets"] - data["cashneq"]) - (data["assets_1y"] - data["cashneq_1y"])) - ((data["liabilities"] - data["debt"]) - (data["liabilities_1y"] - data["debt_1y"]))) / (data["assets"] + data["assets_1y"]) * 2
@@ -95,13 +96,13 @@ def ncfo_to_mc(data):
     data["ncfo_to_mc"] = data["ncfo"] / (data.equity + data.debt - data.cashneq)
     return data
 
-
+# V2
 def fcf_to_ic_growth(data):
     data["fcf_to_ic_growth"] = data["fcf"] / (data["debt"] + data["assets"] - data["intangibles"] - data["cashneq"] - data["liabilitiesc"]) - data["fcf_1y"] / (data["debt_1y"] + data["assets_1y"] - data["intangibles_1y"] - data["cashneq_1y"] - data["liabilitiesc_1y"]) 
     return data
 
 
-#V1
+# V1
 def ncf_to_ev(data):
     data["ncf_to_ev"] = data["ncf"] / data["ev"]
     return data
@@ -111,12 +112,12 @@ def ncf_to_mc(data):
     data["ncf_to_mc"] = data["ncf"] / (data.equity + data.debt - data.cashneq)
     return data
 
-#V1
+# V1
 def sales_to_price(data):
     data["sales_to_price"] = data["revenue"] / (data.equity + data.debt - data.cashneq)
     return data
 
-#V1
+# V1
 def tangible_asset_to_price(data):
     data["tangible_asset_to_price"] = data["tangibles"] / (data.equity + data.debt - data.cashneq)
     return data
@@ -124,4 +125,9 @@ def tangible_asset_to_price(data):
 
 def size(data):
     data["size"] = -np.log(data["marketcap"])
+    return data
+
+# V3
+def momentum(data):
+    data["momentum"] = ((data["closeadj_1m"] / data["closeadj_1y"] - 1) - (data["closeadj"] / data["closeadj_1m"] - 1)) / data["Vol_90D"]
     return data
