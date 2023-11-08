@@ -19,7 +19,6 @@ rebal_date = date(1999, 1, 1)
 while rebal_date <= date(2020, 12, 31):
     rebal_date = date_util.get_next_rebal_day(rebal_date, 3)
 
-    dates.append(rebal_date)
     universe = investment_universe.get_SPX(rebal_date)
     fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), rebal_date)
     p_fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), rebal_date - timedelta(weeks=52))
@@ -30,6 +29,10 @@ while rebal_date <= date(2020, 12, 31):
     fundamentals = pd.merge(fundamentals, sectors, left_on="ticker", right_on="ticker", how="inner")
     fundamentals = pd.merge(fundamentals, price_df, left_on="ticker", right_on="ticker", how="inner")
     fundamentals = pd.merge(fundamentals, p_fundamentals, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_1y"])
+
+    if fundamentals.empty:
+        continue
+    dates.append(rebal_date)
 
     fundamentals = fundamental_signal.tangible_asset_to_price(fundamentals)
     fundamentals = fundamental_signal.ncf_to_ev(fundamentals)
@@ -42,20 +45,6 @@ while rebal_date <= date(2020, 12, 31):
     fundamentals = math_util.normalize(fundamentals, "sales_to_price")
     fundamentals = math_util.normalize(fundamentals, "accruals")
     fundamentals = math_util.normalize(fundamentals, "fcf_to_ic_growth")
-
-    # previous_month = date_util.get_previous_month_end(rebal_date)
-    # previous_month_df = sharadar_prices.get_prices(universe['ticker'].to_list(), previous_month)
-    # previous_month_df = previous_month_df[["ticker", "closeadj"]]
-
-    # previous_year = date_util.get_bus_month_end(rebal_date.year - 1, rebal_date.month)
-    # previous_year_df = sharadar_prices.get_prices(universe['ticker'].to_list(), previous_year)
-    # previous_year_df = previous_year_df[["ticker", "closeadj"]]
-
-    # fundamentals = pd.merge(fundamentals, previous_month_df, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_1m"])
-    # fundamentals = pd.merge(fundamentals, previous_year_df, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_1y"])
-
-    # fundamentals["momentum"] = fundamentals["closeadj_1m"] / fundamentals["closeadj_1y"] - 1
-    # fundamentals["momentum_z"] = fundamentals.groupby("sector", group_keys=False)["momentum"].apply(lambda x: (x - np.mean(x)) / np.std(x))
 
     fundamentals["composite"] = (fundamentals["tangible_asset_to_price_z"] + fundamentals["ncf_to_ev_z"] + fundamentals["sales_to_price_z"] + fundamentals["accruals_z"] + fundamentals["fcf_to_ic_growth_z"]) / 5
 

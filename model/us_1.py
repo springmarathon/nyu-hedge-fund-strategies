@@ -17,7 +17,7 @@ pnl = []
 for i in range(1999, 2020):
     for j in range(1, 13):        
         as_of_date = date_util.get_bus_month_end(i, j)
-        dates.append(as_of_date)
+
         universe = investment_universe.get_SPX(as_of_date)
         fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), as_of_date)
         prices = sharadar_prices.get_prices(universe['ticker'].to_list(), as_of_date)
@@ -26,6 +26,10 @@ for i in range(1999, 2020):
         sectors = sectors[["ticker", "sector"]]
         fundamentals = pd.merge(fundamentals, sectors, left_on="ticker", right_on="ticker", how="inner")
         fundamentals = pd.merge(fundamentals, price_df, left_on="ticker", right_on="ticker", how="inner")
+
+        if fundamentals.empty:
+            continue
+        dates.append(as_of_date)
 
         fundamentals = fundamental_signal.tangible_asset_to_price(fundamentals)
         fundamentals = fundamental_signal.ncf_to_ev(fundamentals)

@@ -17,7 +17,7 @@ pnl = []
 for i in range(1999, 2020):
     for j in range(1, 13):
         as_of_date = date_util.get_bus_month_end(i, j)
-        dates.append(as_of_date)
+
         universe = investment_universe.get_SPX(as_of_date)
         fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), as_of_date)
         prices = sharadar_prices.get_prices(universe['ticker'].to_list(), as_of_date)
@@ -27,11 +27,15 @@ for i in range(1999, 2020):
         fundamentals = pd.merge(fundamentals, sectors, left_on="ticker", right_on="ticker", how="inner")
         fundamentals = pd.merge(fundamentals, price_df, left_on="ticker", right_on="ticker", how="inner")
 
+        if fundamentals.empty:
+            continue
+        dates.append(as_of_date)
+
         fundamentals = fundamental_signal.operating_leverage(fundamentals)
         fundamentals = fundamental_signal.gross_margin(fundamentals)
         fundamentals = fundamental_signal.return_on_equity(fundamentals)
         fundamentals = fundamental_signal.dividend_yield(fundamentals)
-        fundamentals = fundamental_signal.earnings_to_price(fundamentals)
+        fundamentals = fundamental_signal.earnings_yield(fundamentals)
         fundamentals = fundamental_signal.ncf_to_ev(fundamentals)
         fundamentals = fundamental_signal.tangible_asset_to_price(fundamentals)
 
@@ -41,10 +45,10 @@ for i in range(1999, 2020):
         fundamentals["quality"] = (fundamentals["operating_leverage_z"] + fundamentals["return_on_equity_z"] + fundamentals["gross_margin_z"]) / 3
 
         fundamentals["dividend_yield_z"] = fundamentals.groupby("sector", group_keys=False)["dividend_yield"].apply(lambda x: (x - np.mean(x)) / np.std(x))
-        fundamentals["earnings_to_price_z"] = fundamentals.groupby("sector", group_keys=False)["earnings_to_price"].apply(lambda x: (x - np.mean(x)) / np.std(x))
+        fundamentals["earnings_yield_z"] = fundamentals.groupby("sector", group_keys=False)["earnings_yield"].apply(lambda x: (x - np.mean(x)) / np.std(x))
         fundamentals["ncf_to_ev_z"] = fundamentals.groupby("sector", group_keys=False)["ncf_to_ev"].apply(lambda x: (x - np.mean(x)) / np.std(x))
         fundamentals["tangible_asset_to_price_z"] = fundamentals.groupby("sector", group_keys=False)["tangible_asset_to_price"].apply(lambda x: (x - np.mean(x)) / np.std(x))
-        fundamentals["value"] = (fundamentals["dividend_yield_z"] + fundamentals["earnings_to_price_z"] + fundamentals["ncf_to_ev_z"] + fundamentals["tangible_asset_to_price_z"]) / 4
+        fundamentals["value"] = (fundamentals["dividend_yield_z"] + fundamentals["earnings_yield_z"] + fundamentals["ncf_to_ev_z"] + fundamentals["tangible_asset_to_price_z"]) / 4
 
         fundamentals["composite"] = (fundamentals["quality"] + fundamentals["value"]) / 2
 
