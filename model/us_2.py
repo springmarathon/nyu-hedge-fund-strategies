@@ -80,8 +80,9 @@ file.write("Sharpe Ratio: {:.2f}\n".format(np.mean(pnl) / np.std(pnl) * np.sqrt(
 file.write("t-Statistic: {:.2f}\n".format(stats.ttest_1samp(pnl, popmean=0).statistic))
 cum_returns = np.cumprod(pnl + 1) - 1
 high_watermark = np.maximum.accumulate(cum_returns)
-drawdown = high_watermark - cum_returns
+drawdown = (high_watermark - cum_returns) / (1 + high_watermark)
 file.write("Worst Drawdown: {:.2%}\n".format(np.max(drawdown)))
+
 file.write("Percent Weeks Up: {:.2%}\n".format(len(pnl[pnl >= 0]) / len(pnl)))
 file.write("Average Weekly Gain: {:.2%}\n".format(np.mean(pnl[pnl >= 0])))
 file.write("Average Weekly Loss: {:.2%}\n".format(np.mean(pnl[pnl < 0])))

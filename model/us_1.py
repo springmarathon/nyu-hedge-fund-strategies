@@ -49,8 +49,9 @@ file.write("Annual Vol: {:.2%}\n".format(np.std(pnl) * np.sqrt(12)))
 file.write("Sharpe Ratio: {:.2f}\n".format(np.mean(pnl) / np.std(pnl) * np.sqrt(12)))
 cum_returns = np.cumprod(pnl + 1) - 1
 high_watermark = np.maximum.accumulate(cum_returns)
-drawdown = high_watermark - cum_returns
+drawdown = (high_watermark - cum_returns) / (1 + high_watermark)
 file.write("Worst Drawdown: {:.2%}\n".format(np.max(drawdown)))
+
 file.write("Percent Days Up: {:.2%}\n".format(len(pnl[pnl >= 0]) / len(pnl)))
 file.write("Average Daily Gain: {:.2%}\n".format(np.mean(pnl[pnl >= 0])))
 file.write("Average Daily Loss: {:.2%}\n".format(np.mean(pnl[pnl < 0])))
