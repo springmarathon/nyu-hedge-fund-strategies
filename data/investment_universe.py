@@ -11,7 +11,7 @@ def get_SPX(as_of_date, refresh=False):
 
     previous_year_end = date(as_of_date.year - 1, 12, 31)
     universe = quandl.get_table('SHARADAR/SP500', action='historical', date=previous_year_end.strftime("%Y-%m-%d"))
-    changes = quandl.get_table('SHARADAR/SP500', action=['added', 'removed'], date={'gte': previous_year_end.strftime("%Y-%m-%d"), 'lte': as_of_date.strftime("%Y-%m-%d")})
+    changes = quandl.get_table('SHARADAR/SP500', action=['added', 'removed'], date={'gte': date(as_of_date.year, 1, 1).strftime("%Y-%m-%d"), 'lte': as_of_date.strftime("%Y-%m-%d")})
 
     universe = pd.concat([universe, changes[changes["action"] == "added"]])
     universe = pd.merge(universe, changes[changes["action"] == "removed"], left_on="ticker", right_on="ticker", how="left", suffixes=("", "_c"))
