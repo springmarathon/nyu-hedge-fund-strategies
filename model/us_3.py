@@ -26,8 +26,11 @@ def get_data(rebal_date, refresh=False):
     universe = investment_universe.get_SPX(rebal_date)
     fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), rebal_date)
     p_fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), rebal_date - timedelta(weeks=52))
-    prices = sharadar_prices.get_prices(universe['ticker'].to_list(), rebal_date, date_util.get_next_rebal_day(rebal_date, 3))
-    price_df = prices[["ticker", "closeadj", "forward_return"]]
+    prices = sharadar_prices.get_prices(universe['ticker'].to_list(), rebal_date)
+    price_df = prices[["ticker", "closeadj"]]
+    exit_prices = sharadar_prices.get_prices(universe['ticker'].to_list(), date_util.get_next_rebal_day(rebal_date, 3))
+    exit_prices_df = exit_prices[["ticker", "closeadj"]]
+
     sectors = sharadar_tickers.get_tickers(universe['ticker'].to_list(), rebal_date)
     sectors = sectors[["ticker", "sector"]]
     vol_df = sharadar_prices.get_90d_vol(universe['ticker'].to_list(), rebal_date)
@@ -42,10 +45,12 @@ def get_data(rebal_date, refresh=False):
 
     fundamentals = pd.merge(fundamentals, sectors, left_on="ticker", right_on="ticker", how="inner")
     fundamentals = pd.merge(fundamentals, price_df, left_on="ticker", right_on="ticker", how="inner")
+    fundamentals = pd.merge(fundamentals, exit_prices_df, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_f1w"])
     fundamentals = pd.merge(fundamentals, p_fundamentals, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_1y"])
     fundamentals = pd.merge(fundamentals, previous_month_df, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_1m"])
     fundamentals = pd.merge(fundamentals, previous_year_df, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_1y"])
     fundamentals = pd.merge(fundamentals, vol_df, left_on="ticker", right_index=True, how="inner")
+    fundamentals["forward_return"] = fundamentals["closeadj_f1w"] / fundamentals["closeadj"] - 1
 
     fundamentals = fundamentals[["ticker", "sector", "closeadj", "closeadj_1m", "closeadj_1y", "forward_return", "Vol_90D",
                                  "assets", "cashneq", "debt","equity", "ev", "fcf", "intangibles", "liabilities", "liabilitiesc", "ncf", "revenue", "tangibles",
@@ -94,7 +99,6 @@ def print_performance(pnl, dates):
 
     file.write(pnl_df.groupby(pnl_df.index.year).sum().to_string())
 
-    plt.ioff()
     plt.plot(dates, np.cumprod(pnl + 1) - 1)
     plt.savefig(home_path + '/documents/' + model_name + '_{}.png'.format(date.today().strftime("%Y-%m-%d")))
 
@@ -127,7 +131,7 @@ if __name__ == "__main__":
 
         signals = signals.sort_values("composite", ascending=False)
         signals = signals[~signals["composite"].isna()]
-        pnl.append(signals[signals["composite"] >= signals.groupby("sector")["composite"].transform("quantile", 0.8)]["forward_return"].mean() - 
-                    signals[signals["composite"] <= signals.groupby("sector")["composite"].transform("quantile", 0.2)]["forward_return"].mean())
+        pnl.append(signals[signals["composite"] >= signals.groupby("sector")["composite"].transform("quantile", 0.75)]["forward_return"].mean() - 
+                    signals[signals["composite"] <= signals.groupby("sector")["composite"].transform("quantile", 0.25)]["forward_return"].mean())
 
     print_performance(pnl, dates)

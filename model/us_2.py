@@ -15,20 +15,25 @@ quandl.ApiConfig.api_key = 'NRvcyMwNMXZ2ooDSM3nw'
 
 dates = []
 pnl = []
-rebal_date = date(1999, 1, 1)
-while rebal_date <= date(2020, 12, 31):
+rebal_date = date(2000, 1, 1)
+while rebal_date <= date(2021, 12, 31):
     rebal_date = date_util.get_next_rebal_day(rebal_date, 3)
 
     universe = investment_universe.get_SPX(rebal_date)
     fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), rebal_date)
     p_fundamentals = sharadar_fundamentals.get_fundamentals(universe['ticker'].to_list(), rebal_date - timedelta(weeks=52))
-    prices = sharadar_prices.get_prices(universe['ticker'].to_list(), rebal_date, date_util.get_next_rebal_day(rebal_date, 3))
-    price_df = prices[["ticker", "closeadj", "forward_return"]]
+    prices = sharadar_prices.get_prices(universe['ticker'].to_list(), rebal_date)
+    price_df = prices[["ticker", "closeadj"]]
+    exit_prices = sharadar_prices.get_prices(universe['ticker'].to_list(), date_util.get_next_rebal_day(rebal_date, 3))
+    exit_prices_df = exit_prices[["ticker", "closeadj"]]
+
     sectors = sharadar_tickers.get_tickers(universe['ticker'].to_list(), rebal_date)
     sectors = sectors[["ticker", "sector"]]
     fundamentals = pd.merge(fundamentals, sectors, left_on="ticker", right_on="ticker", how="inner")
     fundamentals = pd.merge(fundamentals, price_df, left_on="ticker", right_on="ticker", how="inner")
+    fundamentals = pd.merge(fundamentals, exit_prices_df, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_f1w"])
     fundamentals = pd.merge(fundamentals, p_fundamentals, left_on="ticker", right_on="ticker", how="inner", suffixes=["", "_1y"])
+    fundamentals["forward_return"] = fundamentals["closeadj_f1w"] / fundamentals["closeadj"] - 1
 
     if fundamentals.empty:
         continue
@@ -78,22 +83,21 @@ file.write("Average Weekly Loss: {:.2%}\n".format(np.mean(pnl[pnl < 0])))
 file.write("Best Week: {:.2%}\n".format(np.max(pnl)))
 file.write("Worst Week: {:.2%}\n".format(np.min(pnl)))
 
-file.write("1999 - 2008 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["1999":"2008", "return"]) * 52))
-file.write("1999 - 2008 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["1999":"2008", "return"]) * np.sqrt(52)))
-file.write("1999 - 2008 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["1999":"2008", "return"]) / np.std(pnl_df.loc["1999":"2008", "return"]) * np.sqrt(52)))
+file.write("2000 - 2009 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["2000":"2009", "return"]) * 52))
+file.write("2000 - 2009 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2000":"2009", "return"]) * np.sqrt(52)))
+file.write("2000 - 2009 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2000":"2009", "return"]) / np.std(pnl_df.loc["2000":"2009", "return"]) * np.sqrt(52)))
 
-file.write("2009 - 2018 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["2009":"2018", "return"]) * 52))
-file.write("2009 - 2018 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2009":"2018", "return"]) * np.sqrt(52)))
-file.write("2009 - 2018 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2009":"2018", "return"]) / np.std(pnl_df.loc["2009":"2018", "return"]) * np.sqrt(52)))
+file.write("2010 - 2019 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["2010":"2019", "return"]) * 52))
+file.write("2010 - 2019 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2010":"2019", "return"]) * np.sqrt(52)))
+file.write("2010 - 2019 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2010":"2019", "return"]) / np.std(pnl_df.loc["2010":"2019", "return"]) * np.sqrt(52)))
 
-file.write("2019 - 2020 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["2019":"2020", "return"]) * 52))
-file.write("2019 - 2020 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2019":"2020", "return"]) * np.sqrt(52)))
-file.write("2019 - 2020 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2019":"2020", "return"]) / np.std(pnl_df.loc["2019":"2020", "return"]) * np.sqrt(52)))
+file.write("2020 - 2021 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["2020":"2021", "return"]) * 52))
+file.write("2020 - 2021 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2020":"2021", "return"]) * np.sqrt(52)))
+file.write("2020 - 2021 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2020":"2021", "return"]) / np.std(pnl_df.loc["2020":"2021", "return"]) * np.sqrt(52)))
 
 file.write(pnl_df.groupby(pnl_df.index.year).sum().to_string())
 file.close()
 
-plt.ioff()
 plt.plot(dates, np.cumprod(pnl + 1) - 1)
 plt.savefig('/Users/weizhang/Documents/_GIT/quant-strategies/documents/us_2_{}.png'.format(date.today().strftime("%Y-%m-%d")))
 
