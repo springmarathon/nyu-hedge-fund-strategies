@@ -93,9 +93,9 @@ def print_performance(pnl, dates):
     file.write("2010 - 2019 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2010":"2019", "return"]) * np.sqrt(52)))
     file.write("2010 - 2019 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2010":"2019", "return"]) / np.std(pnl_df.loc["2010":"2019", "return"]) * np.sqrt(52)))
 
-    file.write("2020 - 2021 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["2020":"2021", "return"]) * 52))
-    file.write("2020 - 2021 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2020":"2021", "return"]) * np.sqrt(52)))
-    file.write("2020 - 2021 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2020":"2021", "return"]) / np.std(pnl_df.loc["2020":"2021", "return"]) * np.sqrt(52)))
+    file.write("2020 - 2022 Annual Ret: {:.2%}\n".format(np.mean(pnl_df.loc["2020":"2022", "return"]) * 52))
+    file.write("2020 - 2022 Annual Vol: {:.2%}\n".format(np.std(pnl_df.loc["2020":"2022", "return"]) * np.sqrt(52)))
+    file.write("2020 - 2022 Sharpe Ratio: {:.2f}\n".format(np.mean(pnl_df.loc["2020":"2022", "return"]) / np.std(pnl_df.loc["2020":"2022", "return"]) * np.sqrt(52)))
 
     file.write(pnl_df.groupby(pnl_df.index.year).sum().to_string())
 
@@ -112,7 +112,7 @@ if __name__ == "__main__":
     dates = []
     pnl = []
     rebal_date = date(2000, 1, 1)
-    while rebal_date <= date(2021, 12, 31):
+    while rebal_date <= date(2022, 12, 31):
         rebal_date = date_util.get_next_rebal_day(rebal_date, 3)
         signals = get_data(rebal_date)
 
