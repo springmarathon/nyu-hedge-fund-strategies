@@ -35,11 +35,11 @@ def get_data(rebal_date, refresh=False):
     sectors = sectors[["ticker", "sector"]]
     vol_df = sharadar_prices.get_90d_vol(universe['ticker'].to_list(), rebal_date)
 
-    previous_month = date_util.get_previous_month_end(rebal_date)
+    previous_month = date_util.get_bus_date(rebal_date - timedelta(weeks=4))
     previous_month_df = sharadar_prices.get_prices(universe['ticker'].to_list(), previous_month)
     previous_month_df = previous_month_df[["ticker", "closeadj"]]
 
-    previous_year = date_util.get_bus_month_end(rebal_date.year - 1, rebal_date.month)
+    previous_year = date_util.get_bus_date(rebal_date - timedelta(weeks=52))
     previous_year_df = sharadar_prices.get_prices(universe['ticker'].to_list(), previous_year)
     previous_year_df = previous_year_df[["ticker", "closeadj"]]
 
